@@ -2,7 +2,6 @@ const fs = require('fs')
 const path = process.argv[2]
 let hasDir = false
 let hasPackageJSON = false
-has
 
 const bold = str => {
     return '\033[1m' + str + '\033[0m'
