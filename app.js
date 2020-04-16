@@ -5,7 +5,6 @@ const path = process.argv[2]
 let hasDir = false
 let hasApp = false
 let hasServer = false
-let hasConfig = 
 let dirtyPkg = false
 const freshPkgPath = './resources/package.json'
 const currentPkgPath = `${path}/package.json`
