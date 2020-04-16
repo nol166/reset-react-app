@@ -1,7 +1,11 @@
 const fs = require('fs')
+const Path = require('path')
 const path = process.argv[2]
-const newFiles = process.argv[3]
+// const newFiles = process.argv[3]
 let hasDir = false
+let hasApp = false
+let hasServer = false
+let hasConfig = 
 let dirtyPkg = false
 const freshPkgPath = './resources/package.json'
 const currentPkgPath = `${path}/package.json`
@@ -24,7 +28,7 @@ const red = str => {
 // check if dir exists
 if (!path) {
     console.log(`${bold('reset-react-app')}`)
-    console.log(`Usage: ${__filename} path/to/react_app  path/to/src_files`)
+    console.log(`Usage: ${__filename} path/to/react_app`)
     process.exit(-1)
 }
 
@@ -34,6 +38,22 @@ const isDirty = (current, fresh) => {
         return false
     } else {
         return true
+    }
+}
+
+const deleteFolderRecursive = path => {
+    if (fs.existsSync(path)) {
+        fs.readdirSync(path).forEach(file => {
+            const curPath = Path.join(path, file)
+            if (fs.lstatSync(curPath).isDirectory()) {
+                // recurse
+                deleteFolderRecursive(curPath)
+            } else {
+                // delete file
+                fs.unlinkSync(curPath)
+            }
+        })
+        fs.rmdirSync(path)
     }
 }
 
@@ -47,25 +67,32 @@ fs.readdir(path, (err, items) => {
         console.log(item)
         // check if react app has a src directory
         hasDir = item === 'src' ? true : false
+        if (hasDir) {
+            deleteFolderRecursive(`${path}/src`)
+            results.push(red('removed src/ folder'))
+        }
         if (item === 'package.json') {
             dirtyPkg = isDirty(currentPkg, freshPkg)
             try {
                 if (dirtyPkg) {
                     //file exists, delete it
-                    results.push(red('deleting dirty package.json'))
                     fs.unlink(currentPkgPath, () => console.log('\n'))
+                    results.push(red('deleting dirty package.json'))
                     // copy the clean one
                     fs.copyFile(freshPkgPath, currentPkgPath, err => {
                         if (err) throw err
-                        results.push(bold('deleting dirty package.json'))
                     })
-                    results.push(green('replaced package.json'))
+                    results.push(bold('copied clean package.json'))
                 }
             } catch (err) {
                 console.error(err)
             }
         }
     })
+
+    fs.existsSync(`${path}/src`) || fs.mkdirSync(`${path}/src`)
+    results.push(green('created fresh src/ directory'))
+
     // log out any results at the end
     if (results.length > 0) {
         console.log('\n')
